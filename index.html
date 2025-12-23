@@ -218,54 +218,83 @@
             alert('ฟีเจอร์ Admin จะเปิดในเร็วๆ นี้');
         }
 
-        // Submit Donation
-        async function submitDonation(event) {
-            event.preventDefault();
+        // ฟังก์ชันแปลงไฟล์เป็น Base64 (เพิ่มใหม่)
+    const fileToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    };
+
+    // แก้ไขฟังก์ชัน submitDonation
+    async function submitDonation(event) {
+        event.preventDefault();
+        
+        const form = event.target;
+        const formData = new FormData(form);
+        const button = form.querySelector('button[type="submit"]');
+        
+        button.disabled = true;
+        button.textContent = 'กำลังอัปโหลดสลิปและบันทึก...'; // เปลี่ยนข้อความให้ผู้ใช้รู้
+
+        try {
+            // 1. จัดการไฟล์สลิป
+            const fileInput = form.querySelector('input[name="slip"]');
+            const file = fileInput.files[0];
             
-            const form = event.target;
-            const formData = new FormData(form);
-            const button = form.querySelector('button[type="submit"]');
+            if (!file) throw new Error('กรุณาอัปโหลดสลิปโอนเงิน');
+            if (file.size > 5 * 1024 * 1024) throw new Error('ไฟล์มีขนาดใหญ่เกิน 5MB');
+
+            // แปลงไฟล์เป็น Base64
+            const base64String = await fileToBase64(file);
+            // ตัดส่วนหัว "data:image/png;base64," ออก เพื่อส่งเฉพาะเนื้อไฟล์
+            const base64Content = base64String.split(',')[1]; 
+
+            // 2. เตรียมข้อมูล JSON
+            const data = {
+                timestamp: new Date().toISOString(),
+                prefix: formData.get('prefix'),
+                firstName: formData.get('firstName'),
+                lastName: formData.get('lastName'),
+                graduationYear: formData.get('graduationYear') || '-',
+                idCard: hashIdCard(formData.get('idCard')),
+                phone: formData.get('phone'),
+                email: formData.get('email'),
+                amount: parseFloat(formData.get('amount')),
+                status: 'รอตรวจสอบ',
+                // เพิ่มข้อมูลไฟล์ส่งไปหลังบ้าน
+                fileData: base64Content,
+                mimeType: file.type,
+                fileName: file.name
+            };
+
+            // 3. ส่งข้อมูลไป Google Apps Script
+            const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
             
-            button.disabled = true;
-            button.textContent = 'กำลังบันทึก...';
+            // อ่านค่าตอบกลับเป็น JSON
+            const result = await response.json();
 
-            try {
-                // Convert to JSON
-                const data = {
-                    timestamp: new Date().toISOString(),
-                    prefix: formData.get('prefix'),
-                    firstName: formData.get('firstName'),
-                    lastName: formData.get('lastName'),
-                    graduationYear: formData.get('graduationYear') || '-',
-                    idCard: hashIdCard(formData.get('idCard')),
-                    phone: formData.get('phone'),
-                    email: formData.get('email'),
-                    amount: parseFloat(formData.get('amount')),
-                    status: 'รอตรวจสอบ'
-                };
-
-                // Send to Google Apps Script
-                const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(data)
-                });
-
-                if (response.ok) {
-                    alert('ขอบพระคุณสำหรับการบริจาค!\nเจ้าหน้าที่จะติดต่อกลับภายใน 1-2 วันทำการ');
-                    form.reset();
-                    closeDonationForm();
-                    loadStatistics();
-                } else {
-                    throw new Error('ไม่สามารถบันทึกข้อมูลได้');
-                }
-            } catch (error) {
-                alert('เกิดข้อผิดพลาด: ' + error.message);
-            } finally {
-                button.disabled = false;
-                button.textContent = 'ยืนยันการบริจาค';
+            if (result.success) { // เช็คจากตัวแปร success ที่หลังบ้านส่งมา
+                alert('ขอบพระคุณสำหรับการบริจาค!\nระบบได้รับข้อมูลและสลิปเรียบร้อยแล้ว\nเจ้าหน้าที่จะติดต่อกลับทางอีเมล');
+                form.reset();
+                closeDonationForm();
+                loadStatistics();
+            } else {
+                throw new Error(result.error || 'ไม่สามารถบันทึกข้อมูลได้');
             }
+        } catch (error) {
+            console.error(error);
+            alert('เกิดข้อผิดพลาด: ' + error.message);
+        } finally {
+            button.disabled = false;
+            button.textContent = 'ยืนยันการบริจาค';
         }
-
+    }
         // Hash ID Card
         function hashIdCard(idCard) {
             return idCard.substring(0, 4) + '****' + idCard.substring(9);
