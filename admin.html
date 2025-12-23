@@ -422,6 +422,12 @@
                 minute: '2-digit'
             });
         }
+
+        // Mask ID Card for display (แสดงเฉพาะบางส่วน)
+        function maskIdCard(idCard) {
+            if (!idCard || idCard.length < 13) return '-';
+            return idCard.substring(0, 1) + '-' + idCard.substring(1, 5) + '-****-' + idCard.substring(10, 12) + '-' + idCard.substring(12);
+        }
     </script>
 </body>
 </html>
