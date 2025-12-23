@@ -328,12 +328,25 @@
             `).join('');
         }
 
-        // Verify Donation (placeholder - needs Google Apps Script implementation)
+        // Verify Donation
         async function verifyDonation(donationId) {
             if (!confirm('ยืนยันการอนุมัติรายการนี้?')) return;
             
-            alert('ฟีเจอร์นี้ต้องเพิ่มการเชื่อมต่อกับ Google Apps Script\nเพื่ออัพเดทสถานะใน Google Sheets');
-            // Implementation needed in Google Apps Script
+            try {
+                const response = await fetch(
+                    `${GOOGLE_APPS_SCRIPT_URL}?action=updateStatus&donationId=${donationId}&status=ตรวจสอบแล้ว`
+                );
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('อนุมัติรายการสำเร็จ!');
+                    loadDonations();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถอนุมัติได้'));
+                }
+            } catch (error) {
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + error.message);
+            }
         }
 
         // Export to CSV
