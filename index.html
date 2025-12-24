@@ -195,7 +195,7 @@
 
             <p class="text-gray-600 mb-8">กรุณากรอกข้อมูลให้ครบถ้วน <span id="formPurposeText">เพื่อออกใบเสร็จรับเงินสำหรับลดหย่อนภาษี</span></p>
 
-            <form id="donationForm" onsubmit="submitDonation(event)" class="space-y-6">
+            <form id="donationForm" onsubmit="submitDonation(event)" class="space-y-6" novalidate>
                 <!-- ส่วนข้อมูลพื้นฐาน (ชื่อ-สกุล, รุ่น) -->
                 <div id="basicInfoSection">
                     <div class="grid md:grid-cols-3 gap-4">
@@ -233,7 +233,7 @@
 
                     <div class="mt-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">จำนวนเงินที่สมทบทุน (บาท) *</label>
-                        <input type="number" name="amount" id="amountInput" min="1" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <input type="number" name="amount" id="amountInput" min="1" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
                     </div>
                 </div>
 
@@ -252,7 +252,7 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">อัปโหลดสลิปการโอนเงิน *</label>
-                    <input type="file" name="slip" accept="image/*,.pdf" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    <input type="file" name="slip" id="slipInput" accept="image/*,.pdf" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
                     <p class="text-sm text-gray-500 mt-2">รองรับไฟล์ JPG, PNG หรือ PDF ขนาดไม่เกิน 5MB</p>
                 </div>
 
@@ -303,7 +303,7 @@
             openDonationForm();
         }
 
-        // Open Donation Form
+        // Open Donation Form - FIXED VERSION
         function openDonationForm() {
             const additionalInfoSection = document.getElementById('additionalInfoSection');
             const taxPurpose = document.getElementById('taxPurpose');
@@ -319,7 +319,7 @@
                 // ต้องการลดหย่อนภาษี - แสดง: ชื่อ-สกุล, รุ่น, เลขบัตรประชาชน, จำนวนเงิน, สลิป
                 additionalInfoSection.style.display = 'block';
                 
-                // ทำให้ช่องข้อมูลเป็น required
+                // ✅ เพิ่ม required attribute อย่างชัดเจน
                 amountInput.setAttribute('required', 'required');
                 idCardInput.setAttribute('required', 'required');
                 
@@ -337,15 +337,19 @@
                 // ไม่ต้องการลดหย่อนภาษี - แสดง: ชื่อ-สกุล, รุ่น, สลิป
                 additionalInfoSection.style.display = 'none';
                 
-                // ลบ required attribute จากช่องข้อมูล
+                // ✅ ลบ required attribute อย่างสมบูรณ์
                 amountInput.removeAttribute('required');
                 idCardInput.removeAttribute('required');
                 
-                // ใส่ค่าเริ่มต้นเพื่อให้ระบบทำงานได้
+                // Clear validation state
+                amountInput.setCustomValidity('');
+                idCardInput.setCustomValidity('');
+                
+                // ใส่ค่าเริ่มต้นเพื่อให้ระบบทำงานได้ และไม่ทำให้ form validation ล้มเหลว
                 phoneInput.value = '-';
                 emailInput.value = 'noreply@school.ac.th';
-                amountInput.value = '0';
-                idCardInput.value = '0000000000000';
+                amountInput.value = '1'; // ≥ 1 ตามกำหนด min="1"
+                idCardInput.value = '0000000000000'; // 13 หลัก เพื่อไม่ให้เกิด validation error
                 
                 taxPurpose.textContent = '';
                 formPurposeText.innerHTML = 'กรุณากรอก <strong class="text-purple-600">ชื่อ-สกุล, รุ่น</strong> และ <strong class="text-purple-600">แนบสลิป</strong>';
@@ -363,6 +367,58 @@
             event.preventDefault();
             
             const form = event.target;
+            
+            // ✅ Manual validation เพื่อแน่ใจว่าตรวจสอบฟิลด์ที่ต้องการเท่านั้น
+            let isValid = true;
+            const errors = [];
+            
+            // ตรวจสอบ required fields เสมอ
+            const firstNameInput = document.getElementById('firstNameInput');
+            const lastNameInput = document.getElementById('lastNameInput');
+            const slipInput = document.getElementById('slipInput');
+            const consentCheckbox = document.getElementById('consentCheckbox');
+            
+            if (!firstNameInput.value.trim()) {
+                isValid = false;
+                errors.push('กรุณากรอกชื่อ');
+            }
+            
+            if (!lastNameInput.value.trim()) {
+                isValid = false;
+                errors.push('กรุณากรอกนามสกุล');
+            }
+            
+            if (!slipInput.files || slipInput.files.length === 0) {
+                isValid = false;
+                errors.push('กรุณาอัปโหลดสลิปการโอนเงิน');
+            }
+            
+            if (!consentCheckbox.checked) {
+                isValid = false;
+                errors.push('กรุณายินยอมให้เก็บรวบรวมข้อมูล');
+            }
+            
+            // ตรวจสอบ conditional fields (เมื่อต้องการลดหย่อนภาษี)
+            const amountInput = document.getElementById('amountInput');
+            const idCardInput = document.getElementById('idCardInput');
+            
+            if (needsTaxDeduction) {
+                if (!amountInput.value) {
+                    isValid = false;
+                    errors.push('กรุณากรอกจำนวนเงิน');
+                }
+                
+                if (!idCardInput.value || idCardInput.value === '0000000000000') {
+                    isValid = false;
+                    errors.push('กรุณากรอกเลขบัตรประชาชน');
+                }
+            }
+            
+            if (!isValid) {
+                alert('⚠️ กรุณาตรวจสอบข้อมูล:\n\n' + errors.join('\n'));
+                return;
+            }
+            
             const formData = new FormData(form);
             const button = form.querySelector('button[type="submit"]');
             
@@ -390,10 +446,10 @@
                     firstName: formData.get('firstName'),
                     lastName: formData.get('lastName'),
                     graduationYear: formData.get('graduationYear') || '-',
-                    idCard: formData.get('idCard'), // เก็บเลขเต็ม
+                    idCard: needsTaxDeduction ? formData.get('idCard') : '-', // ลดหย่อนภาษีจึงต้องมี idCard
                     phone: formData.get('phone'),
                     email: formData.get('email'),
-                    amount: parseFloat(formData.get('amount')),
+                    amount: needsTaxDeduction ? parseFloat(formData.get('amount')) : 0,
                     status: 'รอตรวจสอบ',
                     slipBase64: slipBase64,
                     slipFileName: slipFileName,
@@ -412,13 +468,13 @@
 
                 // Note: no-cors mode doesn't allow reading response
                 // So we assume success if no error thrown
-                alert('ขอบพระคุณสำหรับการสมทบทุน!');
+                alert('✅ ขอบพระคุณสำหรับการสมทบทุน!\n\nเจ้าหน้าที่จะตรวจสอบข้อมูลของท่านและติดต่อกลับภายใน 1-2 วันทำการ');
                 form.reset();
                 closeDonationForm();
                 loadStatistics();
 
             } catch (error) {
-                alert('เกิดข้อผิดพลาด: ' + error.message);
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
             } finally {
                 button.disabled = false;
                 button.textContent = 'ยืนยันการสมทบทุน';
