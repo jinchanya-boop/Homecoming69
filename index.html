@@ -320,8 +320,8 @@
                 additionalInfoSection.style.display = 'block';
                 
                 // ทำให้ช่องข้อมูลเป็น required
-                amountInput.required = true;
-                idCardInput.required = true;
+                amountInput.setAttribute('required', 'required');
+                idCardInput.setAttribute('required', 'required');
                 
                 // Clear ค่าเริ่มต้น
                 amountInput.value = '';
@@ -337,9 +337,9 @@
                 // ไม่ต้องการลดหย่อนภาษี - แสดง: ชื่อ-สกุล, รุ่น, สลิป
                 additionalInfoSection.style.display = 'none';
                 
-                // ทำให้ช่องข้อมูลไม่เป็น required
-                amountInput.required = false;
-                idCardInput.required = false;
+                // ลบ required attribute จากช่องข้อมูล
+                amountInput.removeAttribute('required');
+                idCardInput.removeAttribute('required');
                 
                 // ใส่ค่าเริ่มต้นเพื่อให้ระบบทำงานได้
                 phoneInput.value = '-';
@@ -439,8 +439,6 @@
             });
         }
 
-        // Hash ID Card (ลบออกแล้ว - ไม่ใช้งาน)
-        
         // Load Statistics
         async function loadStatistics() {
             try {
