@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="ร่วมบริจาคสนับสนุนงานคืนสู่เหย้าเคารพครู โรงเรียนสา อ.เวียงสา จ.น่าน">
+    <meta name="description" content="ร่วมบริจาคสนับสนุนงานคืนสู่เหย้าเคารพครู โรงเรียนสา อ.แม่จัน จ.เชียงราย">
     <title>งานคืนสู่เหย้าเคารพครู - โรงเรียนสา</title>
     <link rel="icon" href="https://img2.pic.in.th/pic/a1d744ea03eddf4143b788907834cfef.png">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -135,6 +135,52 @@
         </div>
     </section>
 
+    <!-- Tax Deduction Question Modal -->
+    <div id="taxQuestionModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-xl p-8 max-w-2xl w-full">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-12 h-12 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">ท่านประสงค์นำเงินบริจาค<br>ไปใช้สิทธิ์ลดหย่อนภาษีหรือไม่?</h2>
+                <p class="text-gray-600">กรุณาเลือกตัวเลือกที่ตรงกับความต้องการของท่าน</p>
+            </div>
+
+            <div class="space-y-4 mb-8">
+                <label class="flex items-start gap-4 p-6 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition-all">
+                    <input type="radio" name="taxDeduction" value="yes" class="mt-1 w-5 h-5 text-purple-600" checked>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-lg font-bold text-gray-900">✅ ประสงค์ใช้สิทธิ์ลดหย่อนภาษี</span>
+                        </div>
+                        <p class="text-sm text-gray-600">ท่านจะได้รับใบเสร็จรับเงินสำหรับนำไปใช้สิทธิ์ลดหย่อนภาษี<br>(ต้องกรอกข้อมูลเลขบัตรประชาชน)</p>
+                    </div>
+                </label>
+
+                <label class="flex items-start gap-4 p-6 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all">
+                    <input type="radio" name="taxDeduction" value="no" class="mt-1 w-5 h-5 text-blue-600">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-lg font-bold text-gray-900">⚡ ไม่ประสงค์ใช้สิทธิ์ลดหย่อนภาษี</span>
+                        </div>
+                        <p class="text-sm text-gray-600">ท่านไม่ต้องการใบเสร็จสำหรับลดหย่อนภาษี<br>(ไม่ต้องกรอกเลขบัตรประชาชน - สะดวกรวดเร็ว)</p>
+                    </div>
+                </label>
+            </div>
+
+            <div class="flex gap-4">
+                <button onclick="closeTaxQuestion()" class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                    ยกเลิก
+                </button>
+                <button onclick="confirmTaxChoice()" class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:shadow-lg transition-all">
+                    ดำเนินการต่อ
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Donation Form Modal -->
     <div id="donationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl shadow-xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -226,7 +272,7 @@
     <!-- Footer -->
     <footer class="bg-gray-900 text-white py-8 mt-16">
         <div class="container mx-auto px-4 text-center">
-            <p class="text-sm">พัฒนาโดย ©งานเทคโนโลยี โรงเรียนสา | ข้อมูลของท่านได้รับการคุ้มครองตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล</p>
+            <p class="text-sm">© 2568 โรงเรียนสา | ข้อมูลของท่านได้รับการคุ้มครองตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล</p>
         </div>
     </footer>
 
@@ -234,8 +280,46 @@
         // Configuration
         const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbweHQZDZ9LmpiTZuPF_9mGsBtw6uarwQmEvVLp-f-0fZ2QsAY0hT0YQFohMK_xYX6Urzw/exec';
 
-        // Show/Hide Donation Form
+        let needsTaxDeduction = true; // เก็บค่าว่าต้องการลดหย่อนภาษีหรือไม่
+
+        // Show Tax Question
         function showDonationForm() {
+            document.getElementById('taxQuestionModal').classList.remove('hidden');
+        }
+
+        // Close Tax Question
+        function closeTaxQuestion() {
+            document.getElementById('taxQuestionModal').classList.add('hidden');
+        }
+
+        // Confirm Tax Choice and Show Form
+        function confirmTaxChoice() {
+            const selected = document.querySelector('input[name="taxDeduction"]:checked').value;
+            needsTaxDeduction = (selected === 'yes');
+            
+            closeTaxQuestion();
+            openDonationForm();
+        }
+
+        // Open Donation Form
+        function openDonationForm() {
+            const idCardSection = document.getElementById('idCardSection');
+            const idCardInput = document.getElementById('idCardInput');
+            const taxPurpose = document.getElementById('taxPurpose');
+            
+            if (needsTaxDeduction) {
+                // ต้องการลดหย่อนภาษี - แสดงช่องเลขบัตรประชาชน
+                idCardSection.classList.remove('hidden');
+                idCardInput.required = true;
+                taxPurpose.textContent = 'และการลดหย่อนภาษี';
+            } else {
+                // ไม่ต้องการลดหย่อนภาษี - ซ่อนช่องเลขบัตรประชาชน
+                idCardSection.classList.add('hidden');
+                idCardInput.required = false;
+                idCardInput.value = '0000000000000'; // ใส่ค่าเริ่มต้น
+                taxPurpose.textContent = '';
+            }
+            
             document.getElementById('donationModal').classList.remove('hidden');
         }
 
