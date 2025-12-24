@@ -223,17 +223,18 @@
                     </div>
                 </div>
 
+                <!-- ส่วนข้อมูลจำนวนเงิน (แสดงเมื่อใด ก็ต้องกรอก) -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">จำนวนเงินที่สมทบทุน (บาท) *</label>
+                    <input type="number" name="amount" id="amountInput" min="1" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                </div>
+
                 <!-- ส่วนข้อมูลเพิ่มเติม (สำหรับลดหย่อนภาษี) -->
                 <div id="additionalInfoSection">
                     <div id="idCardSection">
                         <label class="block text-sm font-medium text-gray-700 mb-2">เลขบัตรประชาชน (13 หลัก) *</label>
                         <input type="text" name="idCard" id="idCardInput" maxlength="13" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
                         <p class="text-xs text-gray-500 mt-1" id="idCardError"></p>
-                    </div>
-
-                    <div class="mt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">จำนวนเงินที่สมทบทุน (บาท) *</label>
-                        <input type="number" name="amount" id="amountInput" min="1" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
                     </div>
                 </div>
 
@@ -334,25 +335,27 @@
                 taxPurpose.textContent = 'และการลดหย่อนภาษี';
                 formPurposeText.textContent = 'เพื่อออกใบเสร็จรับเงินสำหรับลดหย่อนภาษี';
             } else {
-                // ไม่ต้องการลดหย่อนภาษี - แสดง: ชื่อ-สกุล, รุ่น, สลิป
+                // ไม่ต้องการลดหย่อนภาษี - แสดง: ชื่อ-สกุล, รุ่น, จำนวนเงิน, สลิป (ซ่อน เลขบัตร)
                 additionalInfoSection.style.display = 'none';
                 
-                // ✅ ลบ required attribute อย่างสมบูรณ์
-                amountInput.removeAttribute('required');
+                // ✅ amountInput ยังคงต้อง required (ต้องกรอกจำนวนเงิน)
+                amountInput.setAttribute('required', 'required');
+                
+                // ลบ required จาก idCardInput (ไม่ต้องใช้)
                 idCardInput.removeAttribute('required');
                 
                 // Clear validation state
                 amountInput.setCustomValidity('');
                 idCardInput.setCustomValidity('');
                 
-                // ใส่ค่าเริ่มต้นเพื่อให้ระบบทำงานได้ และไม่ทำให้ form validation ล้มเหลว
+                // ใส่ค่าเริ่มต้น
                 phoneInput.value = '-';
                 emailInput.value = 'noreply@school.ac.th';
-                amountInput.value = '1'; // ≥ 1 ตามกำหนด min="1"
-                idCardInput.value = '0000000000000'; // 13 หลัก เพื่อไม่ให้เกิด validation error
+                amountInput.value = ''; // ให้ผู้ใช้กรอก
+                idCardInput.value = '0000000000000'; // ไม่ใช้
                 
                 taxPurpose.textContent = '';
-                formPurposeText.innerHTML = 'กรุณากรอก <strong class="text-purple-600">ชื่อ-สกุล, รุ่น</strong> และ <strong class="text-purple-600">แนบสลิป</strong>';
+                formPurposeText.innerHTML = 'กรุณากรอก <strong class="text-purple-600">ชื่อ-สกุล, รุ่น, จำนวนเงิน</strong> และ <strong class="text-purple-600">แนบสลิป</strong>';
             }
             
             document.getElementById('donationModal').classList.remove('hidden');
@@ -398,16 +401,21 @@
                 errors.push('กรุณายินยอมให้เก็บรวบรวมข้อมูล');
             }
             
-            // ตรวจสอบ conditional fields (เมื่อต้องการลดหย่อนภาษี)
+            // ตรวจสอบ conditional fields
             const amountInput = document.getElementById('amountInput');
             const idCardInput = document.getElementById('idCardInput');
             
+            // ✅ จำนวนเงิน ต้องกรอกเสมอ (ทั้งสองกรณี)
+            if (!amountInput.value) {
+                isValid = false;
+                errors.push('กรุณากรอกจำนวนเงินที่สมทบทุน');
+            } else if (parseFloat(amountInput.value) < 1) {
+                isValid = false;
+                errors.push('จำนวนเงินต้องมากกว่า 0');
+            }
+            
+            // ✅ เลขบัตรประชาชน ต้องกรอกเฉพาะเมื่อต้องการลดหย่อนภาษี
             if (needsTaxDeduction) {
-                if (!amountInput.value) {
-                    isValid = false;
-                    errors.push('กรุณากรอกจำนวนเงิน');
-                }
-                
                 if (!idCardInput.value || idCardInput.value === '0000000000000') {
                     isValid = false;
                     errors.push('กรุณากรอกเลขบัตรประชาชน');
@@ -446,10 +454,10 @@
                     firstName: formData.get('firstName'),
                     lastName: formData.get('lastName'),
                     graduationYear: formData.get('graduationYear') || '-',
-                    idCard: needsTaxDeduction ? formData.get('idCard') : '-', // ลดหย่อนภาษีจึงต้องมี idCard
+                    idCard: needsTaxDeduction ? formData.get('idCard') : '-',
                     phone: formData.get('phone'),
                     email: formData.get('email'),
-                    amount: needsTaxDeduction ? parseFloat(formData.get('amount')) : 0,
+                    amount: parseFloat(formData.get('amount')), // ✅ ส่งจำนวนเงินเสมอ
                     status: 'รอตรวจสอบ',
                     slipBase64: slipBase64,
                     slipFileName: slipFileName,
